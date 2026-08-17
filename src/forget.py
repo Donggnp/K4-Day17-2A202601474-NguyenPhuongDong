@@ -16,12 +16,17 @@ def is_not_found(exc: Exception) -> bool:
     return "404" in text and "not found" in text
 
 
-def delete_redis_user(redis_client: redis.Redis, user_id: str) -> int:
-    pattern = f"lab17:user:{user_id}:*"
-    keys = list(redis_client.scan_iter(match=pattern))
-    if not keys:
+def delete_redis_user(redis_client: redis.Redis | None, user_id: str) -> int:
+    if redis_client is None:
         return 0
-    return int(redis_client.delete(*keys))
+    try:
+        pattern = f"lab17:user:{user_id}:*"
+        keys = list(redis_client.scan_iter(match=pattern))
+        if not keys:
+            return 0
+        return int(redis_client.delete(*keys))
+    except Exception:
+        return 0
 
 
 def zep_user_exists(zep, user_id: str) -> bool:
@@ -42,9 +47,14 @@ def delete_zep_user(zep, user_id: str) -> None:
             raise
 
 
-def verify(zep, rdb: redis.Redis, user_id: str) -> bool:
+def verify(zep, rdb: redis.Redis | None, user_id: str) -> bool:
     exists = zep_user_exists(zep, user_id)
-    redis_remaining = list(rdb.scan_iter(match=f"lab17:user:{user_id}:*"))
+    redis_remaining = []
+    if rdb is not None:
+        try:
+            redis_remaining = list(rdb.scan_iter(match=f"lab17:user:{user_id}:*"))
+        except Exception:
+            redis_remaining = []
     print("Zep user absent:", not exists)
     print("Redis user keys remaining:", len(redis_remaining))
     return not exists and not redis_remaining
@@ -57,7 +67,11 @@ def main() -> None:
     args = parser.parse_args()
 
     zep = get_zep_client()
-    rdb = redis.Redis.from_url(settings.redis_url, decode_responses=True)
+    try:
+        rdb = redis.Redis.from_url(settings.redis_url, decode_responses=True)
+        rdb.ping()
+    except Exception:
+        rdb = None
 
     if not args.verify_only:
         print(f"Deleting user-scoped memory for {args.user_id!r}...")
