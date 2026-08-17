@@ -1,0 +1,1396 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab 17 — Giới Thiệu & Giải Thích Chi Tiết Hệ Thống Multi-Memory Agent</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0b0f19;
+            --bg-secondary: #111827;
+            --bg-card: #1f2937;
+            --bg-card-hover: #2d3748;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --text-dim: #6b7280;
+            --border: #374151;
+            --border-highlight: #4b5563;
+            
+            --accent-blue: #3b82f6;
+            --accent-cyan: #06b6d4;
+            --accent-emerald: #10b981;
+            --accent-purple: #8b5cf6;
+            --accent-amber: #f59e0b;
+            --accent-rose: #f43f5e;
+            
+            --gradient-blue-purple: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            --gradient-emerald-cyan: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
+            --gradient-amber-rose: linear-gradient(135deg, #f59e0b 0%, #f43f5e 100%);
+            --glass-bg: rgba(31, 41, 55, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding-bottom: 80px;
+        }
+
+        code, pre {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Header / Hero */
+        .hero {
+            position: relative;
+            padding: 60px 20px 40px;
+            background: radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.15) 0%, rgba(11, 15, 25, 0) 70%),
+                        linear-gradient(180deg, #111827 0%, #0b0f19 100%);
+            border-bottom: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px;
+            border-radius: 9999px;
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            color: var(--accent-blue);
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .hero h1 {
+            font-size: 2.75rem;
+            font-weight: 800;
+            letter-spacing: -0.025em;
+            background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 16px;
+        }
+
+        .hero p {
+            max-width: 800px;
+            margin: 0 auto 30px;
+            color: var(--text-muted);
+            font-size: 1.125rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .stat-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            padding: 20px;
+            border-radius: 16px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--accent-cyan);
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        /* Navigation Bar */
+        .sticky-nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(11, 15, 25, 0.85);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border);
+            padding: 12px 20px;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+
+        .nav-container::-webkit-scrollbar {
+            display: none;
+        }
+
+        .nav-btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+
+        .nav-btn:hover, .nav-btn.active {
+            background: var(--bg-card);
+            color: var(--text-main);
+            border-color: var(--border-highlight);
+        }
+
+        .nav-btn.active {
+            color: var(--accent-blue);
+            border-color: var(--accent-blue);
+        }
+
+        /* Layout Main */
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .section-header {
+            margin-bottom: 32px;
+        }
+
+        .section-tag {
+            font-size: 0.875rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--accent-blue);
+            margin-bottom: 8px;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: var(--text-main);
+        }
+
+        .section-desc {
+            color: var(--text-muted);
+            margin-top: 8px;
+            font-size: 1.05rem;
+        }
+
+        /* Cards & Grid */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 24px;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2 { grid-template-columns: 1fr; }
+            .hero h1 { font-size: 2rem; }
+        }
+
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .card:hover {
+            border-color: var(--border-highlight);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .card-title-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .card-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .icon-blue { background: rgba(59, 130, 246, 0.15); color: var(--accent-blue); }
+        .icon-purple { background: rgba(139, 92, 246, 0.15); color: var(--accent-purple); }
+        .icon-emerald { background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald); }
+        .icon-amber { background: rgba(245, 158, 11, 0.15); color: var(--accent-amber); }
+        .icon-rose { background: rgba(244, 63, 94, 0.15); color: var(--accent-rose); }
+        .icon-cyan { background: rgba(6, 182, 212, 0.15); color: var(--accent-cyan); }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .badge {
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .badge-blue { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+        .badge-purple { background: rgba(139, 92, 246, 0.2); color: #c084fc; }
+        .badge-emerald { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+        .badge-amber { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+        .badge-rose { background: rgba(244, 63, 94, 0.2); color: #f87171; }
+        .badge-cyan { background: rgba(6, 182, 212, 0.2); color: #22d3ee; }
+
+        /* Analogy Box */
+        .analogy-box {
+            background: rgba(31, 41, 55, 0.5);
+            border-left: 4px solid var(--accent-cyan);
+            padding: 16px;
+            border-radius: 0 12px 12px 0;
+            margin: 16px 0;
+            font-size: 0.95rem;
+        }
+
+        .analogy-title {
+            font-weight: 700;
+            color: var(--accent-cyan);
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Flow Diagram Visual */
+        .flow-container {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 40px;
+        }
+
+        .flow-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            position: relative;
+        }
+
+        .flow-step {
+            display: grid;
+            grid-template-columns: 80px 1fr;
+            gap: 20px;
+            align-items: start;
+            position: relative;
+        }
+
+        .step-number {
+            background: var(--bg-card);
+            border: 2px solid var(--border-highlight);
+            color: var(--accent-blue);
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            font-weight: 800;
+            margin: 0 auto;
+        }
+
+        .step-content {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .step-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--text-main);
+        }
+
+        /* Code Block Styling */
+        .code-block {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 16px 0;
+        }
+
+        .code-header {
+            background: #161b22;
+            padding: 8px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #30363d;
+            font-size: 0.8rem;
+            color: #8b949e;
+        }
+
+        .code-content {
+            padding: 16px;
+            overflow-x: auto;
+            color: #c9d1d9;
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+
+        .keyword { color: #ff7b72; }
+        .function { color: #d2a8ff; }
+        .string { color: #a5d6ff; }
+        .comment { color: #8b949e; italic: true; }
+        .number { color: #79c0ff; }
+
+        /* Interactive Filter Tabs for Test Cases */
+        .filter-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 8px 18px;
+            border-radius: 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            background: var(--accent-blue);
+            color: white;
+            border-color: var(--accent-blue);
+        }
+
+        /* Case Card */
+        .case-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 24px;
+            margin-bottom: 20px;
+            transition: all 0.2s ease;
+        }
+
+        .case-card:hover {
+            border-color: var(--border-highlight);
+            transform: translateY(-2px);
+        }
+
+        .case-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 14px;
+        }
+
+        .case-id {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--accent-cyan);
+        }
+
+        .case-query {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        .case-meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+            margin-top: 16px;
+            font-size: 0.9rem;
+        }
+
+        .meta-item {
+            background: var(--bg-card);
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .meta-label {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+
+        .meta-value {
+            color: var(--text-main);
+            font-weight: 600;
+        }
+
+        /* Table styling */
+        .tech-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .tech-table th, .tech-table td {
+            padding: 14px 18px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.9rem;
+        }
+
+        .tech-table th {
+            background: var(--bg-card);
+            color: var(--text-muted);
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+        }
+
+        .tech-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Takeaway list */
+        .takeaway-box {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 16px;
+            padding: 28px;
+            margin-top: 30px;
+        }
+
+        .takeaway-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .takeaway-item {
+            display: flex;
+            gap: 14px;
+            align-items: flex-start;
+        }
+
+        .takeaway-icon {
+            background: var(--accent-purple);
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+            flex-shrink: 0;
+        }
+
+        .takeaway-text h4 {
+            font-size: 1rem;
+            color: var(--text-main);
+            margin-bottom: 4px;
+        }
+
+        .takeaway-text p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HERO SECTION -->
+    <header class="hero">
+        <div class="hero-badge">
+            <span>🧠 LAB 17 — MULTI-MEMORY AGENT WITH ZEP</span>
+        </div>
+        <h1>Giải Thích Chi Tiết Hệ Thống & Bộ Nhớ AI Agent</h1>
+        <p>Tài liệu hướng dẫn trực quan, dễ hiểu từ cơ bản đến nâng cao về kiến trúc 4 tầng bộ nhớ (Short-term, Long-term, Episodic, Semantic), luồng xử lý và 11 benchmark test cases thực tế.</p>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value">4 Tầng</div>
+                <div class="stat-label">Cấu Trúc Bộ Nhớ Agent</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">10/4/3/3</div>
+                <div class="stat-label">Tỷ Lệ Context Budget</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">11 Cases</div>
+                <div class="stat-label">Benchmark Ground-Truth</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">100%</div>
+                <div class="stat-label">Quyền Riêng Tư (PII & Consent)</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- NAVIGATION BAR -->
+    <nav class="sticky-nav">
+        <div class="nav-container">
+            <a href="#architecture" class="nav-btn active">1. Tổng Quan Kiến Trúc</a>
+            <a href="#memory-layers" class="nav-btn">2. Chi Tiết 4 Tầng Bộ Nhớ</a>
+            <a href="#context-budget" class="nav-btn">3. Context Budget & Implementation</a>
+            <a href="#test-cases" class="nav-btn">4. Phân Tích 11 Case Benchmark</a>
+            <a href="#privacy" class="nav-btn">5. Privacy & Deletion (GDPR)</a>
+            <a href="#takeaways" class="nav-btn">6. Bài Học Rút Ra</a>
+        </div>
+    </nav>
+
+    <main class="container">
+
+        <!-- SECTION 1: ARCHITECTURE -->
+        <section id="architecture" style="margin-bottom: 60px;">
+            <div class="section-header">
+                <div class="section-tag">Phần 1</div>
+                <h2 class="section-title">Bức Tranh Tổng Quan & Luồng Hệ Thống</h2>
+                <p class="section-desc">Cách một AI Agent tiếp nhận câu hỏi, truy xuất thông tin từ nhiều nguồn bộ nhớ và tổng hợp context tối ưu trước khi phản hồi.</p>
+            </div>
+
+            <div class="flow-container">
+                <h3 style="margin-bottom: 24px; color: var(--accent-cyan); font-size: 1.25rem;">🔄 Quy Trình Xử Lý Một Truy Vấn Chi Tiết Từ Đầu Đến Cuối (End-to-End Execution Flow — 7 Bước Trực Quan)</h3>
+                <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 28px;">
+                    Dưới đây là hành trình chi tiết từng bước mà một câu hỏi từ người dùng đi qua hệ thống Multi-Layer Memory Agent: từ lúc tiếp nhận, lọc quyền riêng tư, phân luồng truy xuất 4 tầng bộ nhớ song song, đến việc cắt giảm Token và đóng gói ngữ cảnh hoàn chỉnh.
+                </p>
+
+                <div class="flow-steps">
+                    <!-- BƯỚC 1 -->
+                    <div class="flow-step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <div class="step-title">📥 Bước 1: Tiếp Nhận Truy Vấn & Kiểm Tra Quyền Riêng Tư (Input & Privacy Gatekeeper)</div>
+                                <span class="badge badge-blue">Giai Đoạn Đầu Vào</span>
+                            </div>
+                            <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 10px;">
+                                Người dùng gửi một truy vấn kèm các thông số định danh thiết yếu: <code>user_id</code> (ví dụ: <em>minh-lab17</em> - xác định WHO), <code>thread_id</code> (xác định phiên làm việc hiện tại) và nội dung câu hỏi (<code>query</code>).
+                            </p>
+                            <div style="background: rgba(255, 255, 255, 0.03); padding: 12px; border-radius: 8px; border-left: 3px solid var(--accent-blue); font-size: 0.88rem; color: var(--text-main);">
+                                <strong>🔍 Các xử lý nội bộ tại Bước 1:</strong>
+                                <ul style="margin: 6px 0 0 18px; color: var(--text-muted);">
+                                    <li><strong>Kiểm tra Consent Registry (Opt-in):</strong> Đọc <code>consent.json</code>. Nếu User chưa bật <code>memory_opt_in: true</code>, hệ thống lập tức chặn mọi quyền lưu trữ và truy xuất bộ nhớ dài hạn bền vững để đảm bảo tuân thủ quyền riêng tư.</li>
+                                    <li><strong>Khử thông tin PII (PII Redaction):</strong> Quét Regex toàn bộ nội dung tin nhắn để lọc bỏ các thông tin cá nhân nhạy cảm như Email (thành <code>[EMAIL_REDACTED]</code>) và Số điện thoại (thành <code>[PHONE_REDACTED]</code>) trước khi nạp vào bộ nhớ Zep Cloud.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- BƯỚC 2 -->
+                    <div class="flow-step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <div class="step-title">⚡ Bước 2: Truy Xuất Ngữ Cảnh Nóng Từ Bộ Nhớ Ngắn Hạn (Short-Term Memory)</div>
+                                <span class="badge badge-blue">Working Memory</span>
+                            </div>
+                            <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 10px;">
+                                Hệ thống lấy thông tin trao đổi gần đây nhất trong cùng phiên hội thoại (<code>thread_id</code>) để giúp Agent hiểu các từ thay thế như "nó", "đoạn mã đó", "kết quả vừa xong".
+                            </p>
+                            <div style="background: rgba(255, 255, 255, 0.03); padding: 12px; border-radius: 8px; border-left: 3px solid var(--accent-blue); font-size: 0.88rem; color: var(--text-main);">
+                                <strong>🔍 Các xử lý nội bộ tại Bước 2:</strong>
+                                <ul style="margin: 6px 0 0 18px; color: var(--text-muted);">
+                                    <li><strong>Sliding Window (Cửa sổ trượt):</strong> Giữ lại K tin nhắn mới nhất (mặc định 6 tin nhắn gần đây).</li>
+                                    <li><strong>Compaction & Preserving Durable Notes (Dồn ép & Giữ ghi chú bền vững):</strong> Khi số lượt thoại kéo dài vượt quá áp lực Token (Pressure Threshold), hệ thống sẽ nén các tin nhắn cũ thành đoạn tóm tắt tổng quan. Tuy nhiên, các thông số trọng yếu (như Trạng thái dự án, Quyết định chốt, Constraint deadline <code>REVIEW-DEADLINE-1600</code>) sẽ được trích xuất thành <em>Durable Notes</em> và luôn được giữ lại ở đầu Context.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- BƯỚC 3 -->
+                    <div class="flow-step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <div class="step-title">📚 Bước 3: Truy Xuất Sở Thích & Facts Dài Hạn (Long-Term Memory / Zep Context Block)</div>
+                                <span class="badge badge-purple">Declarative Memory</span>
+                            </div>
+                            <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 10px;">
+                                Hệ thống gọi Zep Cloud API để lấy thông tin hồ sơ người dùng (User Profile), các sở thích dài hạn và các quyết định đã chốt qua nhiều phiên hội thoại khác nhau.
+                            </p>
+                            <div style="background: rgba(255, 255, 255, 0.03); padding: 12px; border-radius: 8px; border-left: 3px solid var(--accent-purple); font-size: 0.88rem; color: var(--text-main);">
+                                <strong>🔍 Các xử lý nội bộ tại Bước 3:</strong>
+                                <ul style="margin: 6px 0 0 18px; color: var(--text-muted);">
+                                    <li><strong>User Graph Traversal:</strong> Zep duyệt qua Đồ thị tri thức cá nhân của `user_id` để lấy ra danh sách các thực thể (Entities) và sự thật (Facts) liên quan đến truy vấn.</li>
+                                    <li><strong>Conflict Resolution ("Recency Wins"):</strong> Nếu trong quá khứ User bảo thích *Python*, nhưng ở phiên mới hơn User cập nhật dự án *BLUEBIRD-42* chuyển sang dùng *NestJS/TypeScript*, Zep tự động đánh dấu vô hiệu hóa Fact cũ và ưu tiên trả về Fact mới nhất cho ngữ cảnh hiện tại.</li>
+                                    <li><strong>Cách ly User tuyệt đối (User Isolation):</strong> Truy vấn long-term luôn bị ràng buộc bởi `user_id`, đảm bảo thông tin của User A (ví dụ: Lan) không bao giờ bị rò rỉ sang User B (ví dụ: Minh).</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- BƯỚC 4 -->
+                    <div class="flow-step">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <div class="step-title">🎬 Bước 4: Truy Xuất Lịch Sử Sự Cố & Bài Học Kinh Nghiệm (Episodic Memory)</div>
+                                <span class="badge badge-emerald">Trajectory & Experience</span>
+                            </div>
+                            <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 10px;">
+                                Tìm kiếm lại các chuỗi hành động thử-sai trong quá khứ, diễn biến khắc phục lỗi kỹ thuật và các câu rút kinh nghiệm (Reflections) kèm nguồn gốc chứng minh (Provenance).
+                            </p>
+                            <div style="background: rgba(255, 255, 255, 0.03); padding: 12px; border-radius: 8px; border-left: 3px solid var(--accent-emerald); font-size: 0.88rem; color: var(--text-main);">
+                                <strong>🔍 Các xử lý nội bộ tại Bước 4:</strong>
+                                <ul style="margin: 6px 0 0 18px; color: var(--text-muted);">
+                                    <li><strong>Graph Search với Scope Episodes:</strong> Quét các đơn vị nguồn (Episodes) đã lưu trên User Graph với phạm vi <code>scope="episodes"</code> để tìm lại diễn biến quy trình thử nghiệm.</li>
+                                    <li><strong>Nhớ lại chuỗi Thử - Sai (Trial & Error):</strong> Giúp Agent nhớ lại ví dụ: *"Lần trước tăng HTTP timeout thất bại; phải tái sử dụng ClientSession với concurrency=20 mới giải quyết triệt để sự cố connection churn"*.</li>
+                                    <li><strong>Trần giới hạn ký tự (Episode Char Cap):</strong> Mỗi episode được cắt ngắn (dưới 180 ký tự) để giữ lại các thông số kỹ thuật cốt lõi mà không chiếm quá nhiều dung lượng không gian ngữ cảnh.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- BƯỚC 5 -->
+                    <div class="flow-step">
+                        <div class="step-number">5</div>
+                        <div class="step-content">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <div class="step-title">🌐 Bước 5: Tra Cứu Quy Trình Chuẩn & Tri Thức Hệ Thống (Semantic Memory)</div>
+                                <span class="badge badge-amber">Shared Domain Knowledge</span>
+                            </div>
+                            <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 10px;">
+                                Tra cứu tài liệu kỹ thuật chuẩn, quy định công ty hoặc playbook xử lý sự cố chung cho toàn bộ mọi người từ Đồ thị Tri thức Độc lập (Standalone Knowledge Graph).
+                            </p>
+                            <div style="background: rgba(255, 255, 255, 0.03); padding: 12px; border-radius: 8px; border-left: 3px solid var(--accent-amber); font-size: 0.88rem; color: var(--text-main);">
+                                <strong>🔍 Các xử lý nội bộ tại Bước 5:</strong>
+                                <ul style="margin: 6px 0 0 18px; color: var(--text-muted);">
+                                    <li><strong>Độc lập với User (`graph_id`):</strong> Truy xuất dữ liệu từ một Knowledge Graph dùng chung (không truyền `user_id`), đảm bảo tri thức chung không chứa dữ liệu PII cá nhân.</li>
+                                    <li><strong>Giữ nguyên mã quy tắc chuẩn:</strong> Sử dụng phạm vi tìm kiếm <code>scope="episodes"</code> để bảo toàn nguyên văn các mã quy định kỹ thuật (như <code>PAYMENT-RULE-3</code>, <code>CONN-POOL-FIRST</code>, <code>Idempotency-Key</code>).</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- BƯỚC 6 -->
+                    <div class="flow-step">
+                        <div class="step-number">6</div>
+                        <div class="step-content">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <div class="step-title">⚖️ Bước 6: Phân Bổ Ngân Sách Token & Lắp Ráp Ngữ Cảnh (Context Budgeting & Assembly)</div>
+                                <span class="badge badge-cyan">Context Engineering</span>
+                            </div>
+                            <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 10px;">
+                                Đưa dữ liệu thu thập được từ cả 4 tầng bộ nhớ qua Bộ Quản Lý Ngân Sách (<code>ContextBudgetManager</code>) để cắt tỉa Token thừa và lắp ráp thành Prompt hoàn chỉnh.
+                            </p>
+                            <div style="background: rgba(255, 255, 255, 0.03); padding: 12px; border-radius: 8px; border-left: 3px solid var(--accent-cyan); font-size: 0.88rem; color: var(--text-main);">
+                                <strong>🔍 Các xử lý nội bộ tại Bước 6:</strong>
+                                <ul style="margin: 6px 0 0 18px; color: var(--text-muted);">
+                                    <li><strong>Tính toán giới hạn Token (10/4/3/3 Rule):</strong> Giả sử tổng hạn mức Context là 8,000 Tokens → Short-term nhận max 800 Tokens (10%), Long-term nhận max 320 Tokens (4%), Episodic nhận max 240 Tokens (3%), Semantic nhận max 240 Tokens (3%).</li>
+                                    <li><strong>Cắt tỉa ưu tiên Head-preserving (Trimming):</strong> Nếu nội dung tầng nào vượt quá hạn mức, hệ thống cắt bớt phần đuôi (tail) và giữ lại phần đầu (head) chứa các thông tin quan trọng nhất.</li>
+                                    <li><strong>Đóng gói cấu trúc XML Tags:</strong> Ghép các phần đã cắt gọn thành chuỗi Context duy nhất theo thứ tự ưu tiên: <code>&lt;SHORT_TERM&gt;</code> → <code>&lt;LONG_TERM&gt;</code> → <code>&lt;EPISODIC&gt;</code> → <code>&lt;SEMANTIC&gt;</code>.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- BƯỚC 7 -->
+                    <div class="flow-step">
+                        <div class="step-number">7</div>
+                        <div class="step-content">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <div class="step-title">🎯 Bước 7: Phản Hồi LLM & Đánh Giá Bằng Chứng (LLM Response / Evaluator)</div>
+                                <span class="badge badge-rose">Đầu Ra & Benchmarking</span>
+                            </div>
+                            <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 10px;">
+                                Đưa toàn bộ ngữ cảnh đã lắp ráp vào Prompt của LLM để sinh câu trả lời chính xác, hoặc chuyển cho Bộ Đánh Giá (Evaluator) để chấm điểm Ground Truth.
+                            </p>
+                            <div style="background: rgba(255, 255, 255, 0.03); padding: 12px; border-radius: 8px; border-left: 3px solid var(--accent-rose); font-size: 0.88rem; color: var(--text-main);">
+                                <strong>🔍 Các xử lý nội bộ tại Bước 7:</strong>
+                                <ul style="margin: 6px 0 0 18px; color: var(--text-muted);">
+                                    <li><strong>Sinh phản hồi chính xác:</strong> LLM tiếp nhận câu hỏi cùng với ngữ cảnh được tổ chức chặt chẽ, giúp trả lời chính xác các câu hỏi phức tạp mà không bị ảo giác (hallucination).</li>
+                                    <li><strong>Chấm điểm Evidence (Ground-Truth Evaluator):</strong> Bộ kiểm tra tự động sẽ chuẩn hóa chuỗi Context thu được và đối soát: Bắt buộc phải chứa đủ các từ khóa trong <code>must_contain_all</code> và tuyệt đối không dính các từ khóa cấm trong <code>must_not_contain</code>.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Comparison Table Zep vs Baseline -->
+            <h3 style="margin-bottom: 16px; color: var(--text-main);">📊 So Sánh Kiến Trúc: Managed Zep Cloud V3 vs Baseline RAG / Redis</h3>
+            <table class="tech-table">
+                <thead>
+                    <tr>
+                        <th>Tiêu Chí</th>
+                        <th>RAG Truyền Thống / Vector DB</th>
+                        <th>Baseline Redis + Vector</th>
+                        <th>Zep Cloud V3 (Project Trọng Tâm)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Quản lý Cross-session</strong></td>
+                        <td>Chỉ lưu từng câu đơn lẻ, mất ngữ cảnh phiên</td>
+                        <td>Phải tự viết logic lưu key-value cho user</td>
+                        <td><span class="badge badge-emerald">Tự động gắn kết User Graph & Thread</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Trích xuất Fact & Conflict</strong></td>
+                        <td>Không xử lý được thông tin mâu thuẫn</td>
+                        <td>Phải ghi đè thủ công</td>
+                        <td><span class="badge badge-emerald">Tự động cập nhật "Recency Wins" & giữ Lịch sử</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Episodic & Trajectory</strong></td>
+                        <td>Khó tìm lại quy trình thử-sai</td>
+                        <td>Lưu log thô, tốn token</td>
+                        <td><span class="badge badge-emerald">Lưu Episodes & Trích xuất Reflection</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Domain Knowledge</strong></td>
+                        <td>Trộn lẫn với dữ liệu cá nhân của User</td>
+                        <td>Tạo collection riêng</td>
+                        <td><span class="badge badge-emerald">Graph độc lập (`graph_id`) không PII</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- SECTION 2: MEMORY LAYERS -->
+        <section id="memory-layers" style="margin-bottom: 60px;">
+            <div class="section-header">
+                <div class="section-tag">Phần 2</div>
+                <h2 class="section-title">Chi Tiết 4 Tầng Bộ Nhớ (The 4 Memory Layers)</h2>
+                <p class="section-desc">Mỗi tầng bộ nhớ đóng một vai trò riêng biệt giống như các vùng não bộ của con người.</p>
+            </div>
+
+            <div class="grid-2">
+                <!-- 1. Short-term Memory -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title-group">
+                            <div class="card-icon icon-blue">⚡</div>
+                            <div>
+                                <div class="card-title">1. Short-Term Memory</div>
+                                <div style="font-size: 0.8rem; color: var(--text-muted);">Working Memory / Context Nóng</div>
+                            </div>
+                        </div>
+                        <span class="badge badge-blue">Ngắn Hạn</span>
+                    </div>
+                    <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 12px;">
+                        Lưu trữ các lượt hội thoại gần nhất trong phiên hiện tại. Khi cuộc trò chuyện kéo dài, bộ nhớ ngắn hạn sẽ tiến hành <strong>Compaction</strong> (dồn ép): giữ lại K tin nhắn mới nhất + tổng hợp các ghi chú bền vững (Durable Notes).
+                    </p>
+                    
+                    <div class="analogy-box">
+                        <div class="analogy-title">💡 Ẩn dụ thực tế: RAM Máy Tính</div>
+                        Bộ nhớ tạm thời tốc độ cao. Giúp Agent hiểu "nó", "dự án này" trong câu thoại vừa xong là gì.
+                    </div>
+
+                    <div style="font-size: 0.85rem; color: var(--accent-cyan); font-weight: 600; margin-top: 10px;">
+                        🔑 Từ khóa cốt lõi: Sliding Window, Compaction, Durable Notes (State, Decision, TODO).
+                    </div>
+                </div>
+
+                <!-- 2. Long-term Memory -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title-group">
+                            <div class="card-icon icon-purple">📚</div>
+                            <div>
+                                <div class="card-title">2. Long-Term Memory</div>
+                                <div style="font-size: 0.8rem; color: var(--text-muted);">Declarative Memory / Cross-Session</div>
+                            </div>
+                        </div>
+                        <span class="badge badge-purple">Dài Hạn</span>
+                    </div>
+                    <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 12px;">
+                        Lưu trữ thông tin cá nhân, sở thích, quyết định dài hạn của từng User xuyên suốt qua nhiều Thread chat khác nhau. Zep tổng hợp dữ liệu này thành <strong>Context Block</strong> tự động.
+                    </p>
+                    
+                    <div class="analogy-box" style="border-left-color: var(--accent-purple);">
+                        <div class="analogy-title" style="color: var(--accent-purple);">💡 Ẩn dụ thực tế: Sổ Tay Thông Tin Cá Nhân</div>
+                        Lưu "Hôm qua user bảo thích Python". Hôm nay sang phiên mới, Agent vẫn nhớ sở thích này.
+                    </div>
+
+                    <div style="font-size: 0.85rem; color: var(--accent-purple); font-weight: 600; margin-top: 10px;">
+                        🔑 Từ khóa cốt lõi: Context Block, User Isolation (User Graph), Recency Wins.
+                    </div>
+                </div>
+
+                <!-- 3. Episodic Memory -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title-group">
+                            <div class="card-icon icon-emerald">🎬</div>
+                            <div>
+                                <div class="card-title">3. Episodic Memory</div>
+                                <div style="font-size: 0.8rem; color: var(--text-muted);">Trajectory & Lesson Learned</div>
+                            </div>
+                        </div>
+                        <span class="badge badge-emerald">Trải Nghiệm</span>
+                    </div>
+                    <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 12px;">
+                        Ghi lại các chuỗi hành động thử-sai (Trial & Error), diễn biến sự cố và bài học kinh nghiệm kèm nguồn gốc (Provenance). Tìm kiếm thông qua <code>scope="episodes"</code> trên User Graph.
+                    </p>
+                    
+                    <div class="analogy-box" style="border-left-color: var(--accent-emerald);">
+                        <div class="analogy-title" style="color: var(--accent-emerald);">💡 Ẩn dụ thực tế: Nhật Ký Kinh Nghiệm Công Việc</div>
+                        Lần trước thử tăng timeout không hiệu quả; phải tái sử dụng Connection Pool mới sửa được lỗi.
+                    </div>
+
+                    <div style="font-size: 0.85rem; color: var(--accent-emerald); font-weight: 600; margin-top: 10px;">
+                        🔑 Từ khóa cốt lõi: Trajectory, Provenance, Graph Search (`scope="episodes"`), Reflection.
+                    </div>
+                </div>
+
+                <!-- 4. Semantic Memory -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title-group">
+                            <div class="card-icon icon-amber">🌐</div>
+                            <div>
+                                <div class="card-title">4. Semantic Memory</div>
+                                <div style="font-size: 0.8rem; color: var(--text-muted);">Shared Knowledge Graph</div>
+                            </div>
+                        </div>
+                        <span class="badge badge-amber">Tri Thức Chung</span>
+                    </div>
+                    <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 12px;">
+                        Tài liệu hệ thống, quy định công ty, playbook xử lý sự cố dùng chung cho toàn bộ mọi User. Được lưu ở Standalone Graph riêng biệt (<code>graph_id</code>), không liên kết với thông tin cá nhân.
+                    </p>
+                    
+                    <div class="analogy-box" style="border-left-color: var(--accent-amber);">
+                        <div class="analogy-title" style="color: var(--accent-amber);">💡 Ẩn dụ thực tế: Thư Viện / Quy Trình Công Ty</div>
+                        Quy tắc Retry khi thanh toán thất bại (Idempotency Key) mà bất kỳ hỗ trợ viên nào cũng phải tuân thủ.
+                    </div>
+
+                    <div style="font-size: 0.85rem; color: var(--accent-amber); font-weight: 600; margin-top: 10px;">
+                        🔑 Từ khóa cốt lõi: Standalone Graph (`graph_id`), Domain KB, No PII, Entity/Fact Search.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: CONTEXT BUDGET & IMPLEMENTATION -->
+        <section id="context-budget" style="margin-bottom: 60px;">
+            <div class="section-header">
+                <div class="section-tag">Phần 3</div>
+                <h2 class="section-title">Context Budgeting & Thực Thi Trong Code</h2>
+                <p class="section-desc">Cách quản lý hạn mức Token (Token Budgeting 10/4/3/3) và mã nguồn trực tiếp trong file <code>src/memory_student.py</code>.</p>
+            </div>
+
+            <div class="card" style="margin-bottom: 30px;">
+                <h3 style="color: var(--accent-blue); margin-bottom: 12px;">📏 Quy Tắc Phân Bổ Token (10 / 4 / 3 / 3 Budgeting Rule)</h3>
+                <p style="color: var(--text-muted); font-size: 0.95rem;">
+                    Giả sử tổng hạn mức Token cho Context là <strong>8,000 Tokens</strong>, hệ thống sẽ phân bổ ngân sách tối đa cho từng tầng như sau:
+                </p>
+
+                <div class="grid-2" style="margin-top: 20px;">
+                    <div style="background: var(--bg-card); padding: 16px; border-radius: 10px; border-left: 4px solid var(--accent-blue);">
+                        <div style="font-weight: 700; color: var(--accent-blue);">⚡ Short-Term: 10% (~800 Tokens)</div>
+                        <div style="font-size: 0.85rem; color: var(--text-muted);">Ưu tiên hàng đầu (#1) để giữ ngữ cảnh hội thoại hiện tại.</div>
+                    </div>
+
+                    <div style="background: var(--bg-card); padding: 16px; border-radius: 10px; border-left: 4px solid var(--accent-purple);">
+                        <div style="font-weight: 700; color: var(--accent-purple);">📚 Long-Term: 4% (~320 Tokens)</div>
+                        <div style="font-size: 0.85rem; color: var(--text-muted);">Ưu tiên thứ hai (#2) để giữ thông tin cá nhân và sở thích user.</div>
+                    </div>
+
+                    <div style="background: var(--bg-card); padding: 16px; border-radius: 10px; border-left: 4px solid var(--accent-emerald);">
+                        <div style="font-weight: 700; color: var(--accent-emerald);">🎬 Episodic: 3% (~240 Tokens)</div>
+                        <div style="font-size: 0.85rem; color: var(--text-muted);">Ưu tiên thứ ba (#3) để nhớ bài học kinh nghiệm xử lý lỗi.</div>
+                    </div>
+
+                    <div style="background: var(--bg-card); padding: 16px; border-radius: 10px; border-left: 4px solid var(--accent-amber);">
+                        <div style="font-weight: 700; color: var(--accent-amber);">🌐 Semantic: 3% (~240 Tokens)</div>
+                        <div style="font-size: 0.85rem; color: var(--text-muted);">Ưu tiên thứ tư (#4) để bổ sung tri thức domain chung.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CODE WALKTHROUGH -->
+            <h3 style="color: var(--text-main); margin-bottom: 16px;">💻 Mã Nguồn Thực Thi Cốt Lõi (StudentMemory Core Code)</h3>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span>src/memory_student.py — Thực thi 4 phương thức truy xuất bộ nhớ</span>
+                    <span>Python 3.11</span>
+                </div>
+                <div class="code-content">
+<pre><span class="keyword">class</span> <span class="function">StudentMemory</span>:
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, client: Any):
+        self.client = client
+        self.budget = ContextBudgetManager(settings.context_tokens)
+
+    <span class="comment"># TODO 1: Long-term Context Block qua Zep Thread Context API</span>
+    <span class="keyword">def</span> <span class="function">retrieve_long_term</span>(self, user_id: str, thread_id: str, query: str) -> str:
+        prime_eval_thread(self.client, user_id, thread_id, query)
+        user_context = self.client.thread.get_user_context(thread_id=thread_id)
+        <span class="keyword">return</span> getattr(user_context, <span class="string">"context"</span>, <span class="string">""</span>) <span class="keyword">or</span> <span class="string">""</span>
+
+    <span class="comment"># TODO 2: Episodic Memory qua User Graph Search (scope="episodes")</span>
+    <span class="keyword">def</span> <span class="function">retrieve_episodic</span>(self, user_id: str, query: str) -> str:
+        results = self.client.graph.search(
+            user_id=user_id,
+            query=cap_query(query), <span class="comment"># Giới hạn query <= 400 ký tự theo chuẩn Zep API</span>
+            scope=<span class="string">"episodes"</span>,
+            limit=<span class="number">5</span>,
+        )
+        <span class="keyword">return</span> render_graph_search(results, episode_char_cap=<span class="number">180</span>)
+
+    <span class="comment"># TODO 3: Semantic Memory qua Standalone Graph Search (graph_id)</span>
+    <span class="keyword">def</span> <span class="function">retrieve_semantic</span>(self, graph_id: str, query: str) -> str:
+        q = cap_query(query)
+        <span class="keyword">try</span>:
+            <span class="comment"># scope="episodes" giữ nguyên mã định danh nguyên bản (e.g. PAYMENT-RULE-3)</span>
+            results = self.client.graph.search(graph_id=graph_id, query=q, scope=<span class="string">"episodes"</span>, limit=<span class="number">8</span>)
+        <span class="keyword">except</span> Exception:
+            results = self.client.graph.search(graph_id=graph_id, query=q, scope=<span class="string">"nodes"</span>, limit=<span class="number">8</span>)
+        <span class="keyword">return</span> render_graph_search(results)
+
+    <span class="comment"># TODO 4: Lắp ráp Context theo thứ tự ưu tiên & Cắt bớt Token thừa</span>
+    <span class="keyword">def</span> <span class="function">assemble_context</span>(self, layers: dict[str, str]) -> tuple[str, dict]:
+        <span class="keyword">return</span> self.budget.assemble(layers)</pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 4: TEST CASES INSPECTOR -->
+        <section id="test-cases" style="margin-bottom: 60px;">
+            <div class="section-header">
+                <div class="section-tag">Phần 4</div>
+                <h2 class="section-title">Phân Tích Chi Tiết 11 Case Benchmark (E01 - E11)</h2>
+                <p class="section-desc">Mỗi test case được thiết kế để kiểm tra một khía cạnh hoạt động cụ thể của hệ thống bộ nhớ.</p>
+            </div>
+
+            <!-- Filter Buttons -->
+            <div class="filter-bar">
+                <button class="filter-btn active" onclick="filterCases('all')">Tất Cả (11 Cases)</button>
+                <button class="filter-btn" onclick="filterCases('short_term')">Short-Term (E01, E10)</button>
+                <button class="filter-btn" onclick="filterCases('long_term')">Long-Term (E02, E03, E08, E09)</button>
+                <button class="filter-btn" onclick="filterCases('episodic')">Episodic (E04, E05)</button>
+                <button class="filter-btn" onclick="filterCases('semantic')">Semantic (E06, E11)</button>
+                <button class="filter-btn" onclick="filterCases('mixed')">Mixed (E07)</button>
+            </div>
+
+            <!-- CASES LIST -->
+            <div id="cases-container">
+
+                <!-- E01 -->
+                <div class="case-card" data-layer="short_term">
+                    <div class="case-top">
+                        <span class="case-id">CASE E01 — Short-Term Recent Buffer</span>
+                        <span class="badge badge-blue">short_term</span>
+                    </div>
+                    <div class="case-query">"Mã dự án hiện tại chúng ta đang nói đến là gì?"</div>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">
+                        <strong>Mục tiêu:</strong> Kiểm tra khả năng nhận biết ngữ cảnh trực tiếp từ các tin nhắn gần nhất trong cùng phiên chat.
+                    </p>
+                    <div class="case-meta">
+                        <div class="meta-item">
+                            <div class="meta-label">Ground Truth Bắt Buộc</div>
+                            <div class="meta-value" style="color: var(--accent-emerald);">ORCHID-27</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-label">Cơ Chế Hoạt Động</div>
+                            <div class="meta-value">ShortTermMemory Sliding Window</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- E02 -->
+                <div class="case-card" data-layer="long_term">
+                    <div class="case-top">
+                        <span class="case-id">CASE E02 — Cross-Session Preference Recall</span>
+                        <span class="badge badge-purple">long_term</span>
+                    </div>
+                    <div class="case-query">"Tôi thích dùng ngôn ngữ lập trình nào cho backend?"</div>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">
+                        <strong>Mục tiêu:</strong> Kiểm tra khả năng nhớ sở thích cá nhân của User từ phiên chat trước đó chuyển sang phiên chat mới.
+                    </p>
+                    <div class="case-meta">
+                        <div class="meta-item">
+                            <div class="meta-label">Ground Truth Bắt Buộc</div>
+                            <div class="meta-value" style="color: var(--accent-emerald);">Python</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-label">Cơ Chế Hoạt Động</div>
+                            <div class="meta-value">Zep Context Block (`get_user_context`)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- E03 -->
+                <div class="case-card" data-layer="long_term">
+                    <div class="case-top">
+                        <span class="case-id">CASE E03 — Cross-Session Open Loop / TODO</span>
+                        <span class="badge badge-purple">long_term</span>
+                    </div>
+                    <div class="case-query">"Tôi có nhiệm vụ nào chưa hoàn thành và deadline là mấy giờ?"</div>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">
+                        <strong>Mục tiêu:</strong> Nhớ các việc cần làm (open loop/TODO) được ghi chép từ phiên chat trước.
+                    </p>
+                    <div class="case-meta">
+                        <div class="meta-item">
+                            <div class="meta-label">Ground Truth Bắt Buộc</div>
+                            <div class="meta-value" style="color: var(--accent-emerald);">benchmark report, 16:00</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-label">Cơ Chế Hoạt Động</div>
+                            <div class="meta-value">User Graph Facts Extraction</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- E04 -->
+                <div class="case-card" data-layer="episodic">
+                    <div class="case-top">
+                        <span class="case-id">CASE E04 — Episodic Trajectory Recall</span>
+                        <span class="badge badge-emerald">episodic</span>
+                    </div>
+                    <div class="case-query">"Lần trước ta fix async HTTP timeout bằng cách nào?"</div>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">
+                        <strong>Mục tiêu:</strong> Truy vấn lại diễn biến thử-sai và giải pháp kỹ thuật cụ thể đã giải quyết sự cố lần trước.
+                    </p>
+                    <div class="case-meta">
+                        <div class="meta-item">
+                            <div class="meta-label">Ground Truth Bắt Buộc</div>
+                            <div class="meta-value" style="color: var(--accent-emerald);">ClientSession, concurrency=20, ASYNC-FIX-20</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-label">Cơ Chế Hoạt Động</div>
+                            <div class="meta-value">User Graph Search (`scope="episodes"`)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- E05 -->
+                <div class="case-card" data-layer="episodic">
+                    <div class="case-top">
+                        <span class="case-id">CASE E05 — Episodic Reflection & Lessons Learned</span>
+                        <span class="badge badge-emerald">episodic</span>
+                    </div>
+                    <div class="case-query">"Bài học rút ra từ sự cố connection lỗi là gì?"</div>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">
+                        <strong>Mục tiêu:</strong> Truy vấn nhận định/rút kinh nghiệm (Reflection) được tổng hợp sau quá trình sửa lỗi.
+                    </p>
+                    <div class="case-meta">
+                        <div class="meta-item">
+                            <div class="meta-label">Ground Truth Bắt Buộc</div>
+                            <div class="meta-value" style="color: var(--accent-emerald);">connection churn, timeout threshold</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-label">Cơ Chế Hoạt Động</div>
+                            <div class="meta-value">Episodic Episode Content & Metadata</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- E06 -->
+                <div class="case-card" data-layer="semantic">
+                    <div class="case-top">
+                        <span class="case-id">CASE E06 — Semantic Knowledge Retry Rules</span>
+                        <span class="badge badge-amber">semantic</span>
+                    </div>
+                    <div class="case-query">"Quy tắc retry thanh toán và mã định danh tuân thủ là gì?"</div>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">
+                        <strong>Mục tiêu:</strong> Tìm kiếm quy định chuẩn của hệ thống từ Knowledge Graph dùng chung (Standalone Semantic KB).
+                    </p>
+                    <div class="case-meta">
+                        <div class="meta-item">
+                            <div class="meta-label">Ground Truth Bắt Buộc</div>
+                            <div class="meta-value" style="color: var(--accent-emerald);">Idempotency-Key, max-3-retries, exponential-backoff</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-label">Cơ Chế Hoạt Động</div>
+                            <div class="meta-value">Standalone Graph Search (`graph_id`)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- E07 -->
+                <div class="case-card" data-layer="mixed">
+                    <div class="case-top">
+                        <span class="case-id">CASE E07 — Mixed Layer Context Assembly</span>
+                        <span class="badge badge-rose">mixed</span>
+                    </div>
+                    <div class="case-query">"Tóm tắt công nghệ backend tôi thich và quy tắc retry API thanh toán."</div>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">
+                        <strong>Mục tiêu:</strong> Kiểm tra khả năng kết hợp thông tin giữa Long-Term Memory (sở thích User) và Semantic Memory (quy tắc hệ thống).
+                    </p>
+                    <div class="case-meta">
+                        <div class="meta-item">
+                            <div class="meta-label">Ground Truth Bắt Buộc</div>
+                            <div class="meta-value" style="color: var(--accent-emerald);">Python AND Idempotency-Key</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-label">Cơ Chế Hoạt Động</div>
+                            <div class="meta-value">`assemble_context` Merging (10/4/3/3 Rule)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- E08 -->
+                <div class="case-card" data-layer="long_term">
+                    <div class="case-top">
+                        <span class="case-id">CASE E08 — Recency Wins & Conflict Resolution</span>
+                        <span class="badge badge-purple">long_term</span>
+                    </div>
+                    <div class="case-query">"Dự án BLUEBIRD-42 hiện tại chốt dùng stack công nghệ nào?"</div>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">
+                        <strong>Mục tiêu:</strong> Ban đầu User chọn Python, nhưng ở phiên sau đổi sang TypeScript/NestJS. Hệ thống phải ưu tiên thông tin mới nhất (Recency Wins).
+                    </p>
+                    <div class="case-meta">
+                        <div class="meta-item">
+                            <div class="meta-label">Ground Truth Bắt Buộc</div>
+                            <div class="meta-value" style="color: var(--accent-emerald);">BLUEBIRD-42, TypeScript, NestJS</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-label">Cơ Chế Hoạt Động</div>
+                            <div class="meta-value">Zep Temporal Facts Invalidation & Graph Edges</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- E09 -->
+                <div class="case-card" data-layer="long_term">
+                    <div class="case-top">
+                        <span class="case-id">CASE E09 — User Isolation & Privacy Guard</span>
+                        <span class="badge badge-purple">long_term</span>
+                    </div>
+                    <div class="case-query">"Kiểm tra stack của user Lan (lan-lab17) để đảm bảo không bị rò rỉ mã dự án của Minh."</div>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">
+                        <strong>Mục tiêu:</strong> Kiểm tra tính cách ly dữ liệu tuyệt đối giữa các User. Query của Lan phải có thông tin của Lan nhưng CẤM chứa mã dự án của Minh.
+                    </p>
+                    <div class="case-meta">
+                        <div class="meta-item">
+                            <div class="meta-label">Ground Truth Bắt Buộc / Cấm</div>
+                            <div class="meta-value" style="color: var(--accent-emerald);">Bắt buộc: LOTUS-88, Java, Spring Boot | <span style="color: var(--accent-rose);">Cấm: ORCHID-27</span></div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-label">Cơ Chế Hoạt Động</div>
+                            <div class="meta-value">User-scoped Namespace Enforcement</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- E10 -->
+                <div class="case-card" data-layer="short_term">
+                    <div class="case-top">
+                        <span class="case-id">CASE E10 — Short-Term Compaction & Durable Notes</span>
+                        <span class="badge badge-blue">short_term</span>
+                    </div>
+                    <div class="case-query">"Deadline review code được chốt khi nào trong phiên hiện tại?"</div>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">
+                        <strong>Mục tiêu:</strong> Khi cuộc trò chuyện quá dài làm trôi tin nhắn thô cũ,Compaction vẫn phải giữ lại thông số quan trọng (Durable Note).
+                    </p>
+                    <div class="case-meta">
+                        <div class="meta-item">
+                            <div class="meta-label">Ground Truth Bắt Buộc</div>
+                            <div class="meta-value" style="color: var(--accent-emerald);">REVIEW-DEADLINE-1600, Friday, 16:00</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-label">Cơ Chế Hoạt Động</div>
+                            <div class="meta-value">`extract_durable_notes` trong `short_term.py`</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- E11 -->
+                <div class="case-card" data-layer="semantic">
+                    <div class="case-top">
+                        <span class="case-id">CASE E11 — Semantic Playbook Search</span>
+                        <span class="badge badge-amber">semantic</span>
+                    </div>
+                    <div class="case-query">"Playbook xử lý sự cố kết nối HTTP async chỉ định mã quy tắc nào?"</div>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">
+                        <strong>Mục tiêu:</strong> Tra cứu chính xác mã quy tắc kỹ thuật chuẩn từ tài liệu kiến thức chung.
+                    </p>
+                    <div class="case-meta">
+                        <div class="meta-item">
+                            <div class="meta-label">Ground Truth Bắt Buộc</div>
+                            <div class="meta-value" style="color: var(--accent-emerald);">connection pooling, CONN-POOL-FIRST</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-label">Cơ Chế Hoạt Động</div>
+                            <div class="meta-value">Semantic Graph Episode Text Search</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- SECTION 5: PRIVACY & RIGHT TO BE FORGOTTEN -->
+        <section id="privacy" style="margin-bottom: 60px;">
+            <div class="section-header">
+                <div class="section-tag">Phần 5</div>
+                <h2 class="section-title">Quyền Riêng Tư & Quyền Được Quên (Right to be Forgotten)</h2>
+                <p class="section-desc">Đáp ứng tiêu chuẩn GDPR/CCPA: Xóa sạch dữ liệu bộ nhớ của User khi có yêu cầu mà không làm hỏng tri thức chung.</p>
+            </div>
+
+            <div class="grid-2">
+                <div class="card">
+                    <h3 style="color: var(--accent-rose); margin-bottom: 12px;">🛡️ Privacy-by-Design Filters</h3>
+                    <ul style="color: var(--text-muted); font-size: 0.95rem; display: flex; flex-direction: column; gap: 10px; margin-left: 20px;">
+                        <li><strong>Opt-in Consent (<code>consent.json</code>):</strong> Kiểm tra quyền trước khi nạp bộ nhớ bền vững. Nếu chưa đồng ý, hệ thống sẽ chặn ghi dữ liệu dài hạn.</li>
+                        <li><strong>PII Redaction (<code>minimize_pii</code>):</strong> Tự động lọc bỏ Email (<code>[EMAIL_REDACTED]</code>) và Số điện thoại (<code>[PHONE_REDACTED]</code>) bằng Regex trước khi gửi tới Zep Cloud.</li>
+                        <li><strong>User Isolation:</strong> Mọi truy vấn long-term/episodic bắt buộc phải kèm <code>user_id</code> cụ thể để tránh rò rỉ chéo.</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3 style="color: var(--accent-emerald); margin-bottom: 12px;">🧹 Quy Trình Xóa Dữ Liệu (`src/forget.py`)</h3>
+                    <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 14px;">
+                        Khi chạy lệnh <code>python -m src.forget --user-id minh-lab17</code>:
+                    </p>
+                    <ol style="color: var(--text-muted); font-size: 0.9rem; display: flex; flex-direction: column; gap: 8px; margin-left: 20px;">
+                        <li>Gọi <code>zep.user.delete(user_id)</code> để xóa toàn bộ Graph, Sessions và Facts của User trên Zep.</li>
+                        <li>Xóa các keys liên quan đến User trong Redis (<code>lab17:user:minh-lab17:*</code>).</li>
+                        <li><strong>Duy trì Standalone Semantic Graph:</strong> Tri thức chung của hệ thống không bị xóa vì không chứa thông tin cá nhân (PII) của User.</li>
+                    </ol>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 6: LESSONS LEARNED & TAKEAWAYS -->
+        <section id="takeaways">
+            <div class="section-header">
+                <div class="section-tag">Phần 6</div>
+                <h2 class="section-title">Bài Học Rút Ra & Giá Trị Thực Tế (Engineering Takeaways)</h2>
+                <p class="section-desc">Tóm tắt những bài học quan trọng nhất về mặt kiến trúc phần mềm mà bạn có thể áp dụng ngay vào các dự án AI thực tế.</p>
+            </div>
+
+            <div class="takeaway-box">
+                <h3 style="color: var(--text-main); font-size: 1.25rem;">💡 4 Bài Học Cốt Lõi Chiêu Thức Kiến Trúc Bộ Nhớ AI Agent:</h3>
+                
+                <div class="takeaway-list">
+                    <div class="takeaway-item">
+                        <div class="takeaway-icon">1</div>
+                        <div class="takeaway-text">
+                            <h4>RAG Truyền Thống Thất Bại Trong Hội Thoại Đa Phiên</h4>
+                            <p>Vector similarity thuần túy không hiểu được yếu tố thời gian (Temporal), mâu thuẫn dữ liệu (Conflict), hay sở thích cá nhân xuyên suốt. Cần tổ chức thành <strong>Knowledge Graph + Episode Trajectories</strong> như Zep.</p>
+                        </div>
+                    </div>
+
+                    <div class="takeaway-item">
+                        <div class="takeaway-icon">2</div>
+                        <div class="takeaway-text">
+                            <h4>Nguyên Tắc "Recency Wins" Trong Xử Lý Mâu Thuẫn</h4>
+                            <p>Khi thông tin thay đổi (như chuyển từ Python sang TypeScript), hệ thống phải ưu tiên thông tin mới nhất cho tác vụ hiện tại, đồng thời lưu giữ thông tin cũ dưới dạng lịch sử để truy vết (Provenance).</p>
+                        </div>
+                    </div>
+
+                    <div class="takeaway-item">
+                        <div class="takeaway-icon">3</div>
+                        <div class="takeaway-text">
+                            <h4>Chống Ô Nhóm Context (Prompt Pollution) Nhờ Context Budgeting</h4>
+                            <p>Đưa quá nhiều thông tin bộ nhớ vào LLM sẽ làm nhiễu và tăng chi phí. Quy tắc phân bổ <strong>10/4/3/3</strong> giúp tối ưu hóa số lượng Token mà vẫn đảm bảo đầy đủ thông tin cần thiết.</p>
+                        </div>
+                    </div>
+
+                    <div class="takeaway-item">
+                        <div class="takeaway-icon">4</div>
+                        <div class="takeaway-text">
+                            <h4>Thiết Kế Bảo Mật & Quyền Riêng Tư Ngay Từ Đầu (Privacy-by-Design)</h4>
+                            <p>Phân tách rõ ràng giữa <em>Dữ liệu cá nhân (User Graph)</em> và <em>Tri thức chung (Semantic Knowledge Graph)</em>. Điều này cho phép thực hiện quyền quên (Right to be forgotten) nhanh chóng mà không gây tổn hại đến hệ thống.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- INTERACTIVE SCRIPT -->
+    <script>
+        function filterCases(layer) {
+            const buttons = document.querySelectorAll('.filter-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            const cards = document.querySelectorAll('.case-card');
+            cards.forEach(card => {
+                if (layer === 'all' || card.getAttribute('data-layer') === layer) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        // Smooth scroll for navbar links
+        document.querySelectorAll('.nav-btn').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                if(this.getAttribute('href').startsWith('#')) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href');
+                    const targetElement = document.querySelector(targetId);
+                    if(targetElement) {
+                        window.scrollTo({
+                            top: targetElement.offsetTop - 80,
+                            behavior: 'smooth'
+                        });
+                        document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+                        this.classList.add('active');
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
