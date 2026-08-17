@@ -3,24 +3,24 @@
 - Implementation: `student`
 - Kind: `practice`
 - Cases: **11**
-- Passed: **5/11**
-- Evidence hit rate: **45.5%**
-- Average retrieval latency: **611.7 ms**
-- Average token reduction vs full source context: **67.4%**
+- Passed: **11/11**
+- Evidence hit rate: **100.0%**
+- Average retrieval latency: **1852.0 ms**
+- Average token reduction vs full source context: **20.2%**
 
 | Case | Layer | Pass | Latency ms | Retrieved tokens | Token reduction | Missing / Error |
 | --- | --- | --- | ---: | ---: | ---: | --- |
 | E01 | short_term | PASS | 0.0 | 133 | 0.0% |  |
-| E06 | semantic | PASS | 977.1 | 148 | 67.8% |  |
-| E09 | long_term | PASS | 1170.4 | 599 | 0.0% |  |
+| E06 | semantic | PASS | 1325.1 | 148 | 67.8% |  |
+| E09 | long_term | PASS | 1983.8 | 599 | 0.0% |  |
 | E10 | short_term | PASS | 0.2 | 195 | 0.0% |  |
-| E02 | long_term | FAIL | 914.2 | 0 | 100.0% | ApiError: headers: {'date': 'Mon, 17 Aug 2026 09:22:54 GMT', 'content-type': 'application/json; charset=utf-8', 'transfer-encoding': 'chunked', 'connection': 'keep-alive', 'vary': 'Origin', 'x-content-type-options': 'nosniff', 'x-ratelimit-increment': '1', 'x-ratelimit-limit': '300', 'x-ratelimit-remaining': '293', 'x-ratelimit-reset': '1786958580', 'strict-transport-security': 'max-age=2592000', 'cf-cache-status': 'DYNAMIC', 'content-encoding': 'gzip', 'server': 'cloudflare', 'cf-ray': 'a2c79df02b8c3dd5-SIN'}, status_code: 404, body: {'message': 'user not found', 'request_id': '51bb7f04-059b-4d91-a284-9a8da568d170'} |
-| E03 | long_term | FAIL | 1098.1 | 0 | 100.0% | ApiError: headers: {'date': 'Mon, 17 Aug 2026 09:22:55 GMT', 'content-type': 'application/json; charset=utf-8', 'transfer-encoding': 'chunked', 'connection': 'keep-alive', 'vary': 'Origin', 'x-content-type-options': 'nosniff', 'x-ratelimit-increment': '1', 'x-ratelimit-limit': '300', 'x-ratelimit-remaining': '291', 'x-ratelimit-reset': '1786958580', 'strict-transport-security': 'max-age=2592000', 'cf-cache-status': 'DYNAMIC', 'content-encoding': 'gzip', 'server': 'cloudflare', 'cf-ray': 'a2c79df748333dd5-SIN'}, status_code: 404, body: {'message': 'user not found', 'request_id': 'dd5ae7bc-1e35-4e90-8b06-e3796b23ab7e'} |
-| E04 | episodic | FAIL | 388.2 | 0 | 100.0% | ApiError: headers: {'date': 'Mon, 17 Aug 2026 09:22:55 GMT', 'content-type': 'application/json; charset=utf-8', 'transfer-encoding': 'chunked', 'connection': 'keep-alive', 'vary': 'Origin', 'x-content-type-options': 'nosniff', 'x-ratelimit-increment': '1', 'x-ratelimit-limit': '300', 'x-ratelimit-remaining': '290', 'x-ratelimit-reset': '1786958580', 'strict-transport-security': 'max-age=2592000', 'cf-cache-status': 'DYNAMIC', 'content-encoding': 'gzip', 'server': 'cloudflare', 'cf-ray': 'a2c79df8a90f3dd5-SIN'}, status_code: 404, body: {'message': 'not found', 'request_id': 'c4a3b528-66d8-4b35-9b33-22dc306166d8'} |
-| E05 | episodic | FAIL | 533.1 | 0 | 100.0% | ApiError: headers: {'date': 'Mon, 17 Aug 2026 09:22:56 GMT', 'content-type': 'application/json; charset=utf-8', 'transfer-encoding': 'chunked', 'connection': 'keep-alive', 'vary': 'Origin', 'x-content-type-options': 'nosniff', 'x-ratelimit-increment': '1', 'x-ratelimit-limit': '300', 'x-ratelimit-remaining': '289', 'x-ratelimit-reset': '1786958580', 'strict-transport-security': 'max-age=2592000', 'cf-cache-status': 'DYNAMIC', 'content-encoding': 'gzip', 'server': 'cloudflare', 'cf-ray': 'a2c79dfb1af83dd5-SIN'}, status_code: 404, body: {'message': 'not found', 'request_id': '5a9d74f0-372a-4279-95f6-215b7db33d9c'} |
-| E07 | mixed | FAIL | 479.0 | 0 | 100.0% | ApiError: headers: {'date': 'Mon, 17 Aug 2026 09:22:56 GMT', 'content-type': 'application/json; charset=utf-8', 'transfer-encoding': 'chunked', 'connection': 'keep-alive', 'vary': 'Origin', 'x-content-type-options': 'nosniff', 'x-ratelimit-increment': '1', 'x-ratelimit-limit': '300', 'x-ratelimit-remaining': '287', 'x-ratelimit-reset': '1786958580', 'strict-transport-security': 'max-age=2592000', 'cf-cache-status': 'DYNAMIC', 'content-encoding': 'gzip', 'server': 'cloudflare', 'cf-ray': 'a2c79dffefc33dd5-SIN'}, status_code: 404, body: {'message': 'user not found', 'request_id': '665e0254-e572-48a5-bd14-cd2fb871925e'} |
-| E11 | semantic | PASS | 280.1 | 146 | 74.2% |  |
-| E08 | long_term | FAIL | 888.6 | 0 | 100.0% | ApiError: headers: {'date': 'Mon, 17 Aug 2026 09:22:57 GMT', 'content-type': 'application/json; charset=utf-8', 'transfer-encoding': 'chunked', 'connection': 'keep-alive', 'vary': 'Origin', 'x-content-type-options': 'nosniff', 'x-ratelimit-increment': '1', 'x-ratelimit-limit': '300', 'x-ratelimit-remaining': '284', 'x-ratelimit-reset': '1786958580', 'strict-transport-security': 'max-age=2592000', 'cf-cache-status': 'DYNAMIC', 'content-encoding': 'gzip', 'server': 'cloudflare', 'cf-ray': 'a2c79e075d7e3dd5-SIN'}, status_code: 404, body: {'message': 'user not found', 'request_id': 'baeb1710-8624-4afa-943f-13db81d40b60'} |
+| E02 | long_term | PASS | 5557.2 | 842 | 0.0% |  |
+| E03 | long_term | PASS | 1823.0 | 842 | 0.0% |  |
+| E04 | episodic | PASS | 4993.5 | 153 | 30.8% |  |
+| E05 | episodic | PASS | 295.8 | 144 | 34.8% |  |
+| E07 | mixed | PASS | 1446.1 | 485 | 14.2% |  |
+| E11 | semantic | PASS | 1019.7 | 146 | 74.2% |  |
+| E08 | long_term | PASS | 1927.6 | 843 | 0.0% |  |
 
 ## Evidence excerpts
 
@@ -42,23 +42,23 @@
 
 ### E02 - long_term
 
-``
+`<USER_SUMMARY> Minh Nguyen's personal project is named ORCHID-27, for which Python is preferred. The company project BLUEBIRD-42 uses TypeScript with NestJS for its backend. Minh has an upcoming deadline for the benchmark report open loop LAB-REPORT-1600 by Friday at 4 PM. Minh is currently debugging async HTTP requests and has tried increasing the timeout to 60s without success, with the efficient approach being to reuse an aiohttp ClientSession and set concurrency to 20. The main issue was connection churn, related to the ASYNC-FIX-20 incident.  Minh Nguyen likes Python and dislikes Java. When explaining code, use short examples. When discussing async/await and coroutines vs. Tasks, explai`
 
 ### E03 - long_term
 
-``
+`<USER_SUMMARY> Minh Nguyen's personal project is named ORCHID-27, for which Python is preferred. The company project BLUEBIRD-42 uses TypeScript with NestJS for its backend. Minh has an upcoming deadline for the benchmark report open loop LAB-REPORT-1600 by Friday at 4 PM. Minh is currently debugging async HTTP requests and has tried increasing the timeout to 60s without success, with the efficient approach being to reuse an aiohttp ClientSession and set concurrency to 20. The main issue was connection churn, related to the ASYNC-FIX-20 incident.  Minh Nguyen likes Python and dislikes Java. When explaining code, use short examples. When discussing async/await and coroutines vs. Tasks, explai`
 
 ### E04 - episodic
 
-``
+`EPISODE: TODO: hoan thanh benchmark report truoc thu Sau luc 16:00. Day la open loop LAB-REPORT-1600. EPISODE: Hom nay toi debug async HTTP. Toi da thu tang timeout len 60s nhung van fail. EPISODE: Cach hieu qua la reuse aiohttp ClientSession va dat concurrency=20. Reflection: loi chinh la connection churn, khong phai timeout threshold. Ma su co ASYNC-FIX-20. EPISODE: Da ghi nhan trajectory: increase timeout khong hieu qua; ClientSession + concurrency=20 giai quyet connection churn. EPISODE: Toi dang hoc async/await va hay nham coroutine voi Task. Neu sau nay gap chu de nay, hay giai thich bang timeline.`
 
 ### E05 - episodic
 
-``
+`EPISODE: Voi demo ca nhan cua Minh, ngon ngu uu tien la gi? EPISODE: Hom nay toi debug async HTTP. Toi da thu tang timeout len 60s nhung van fail. EPISODE: Cach hieu qua la reuse aiohttp ClientSession va dat concurrency=20. Reflection: loi chinh la connection churn, khong phai timeout threshold. Ma su co ASYNC-FIX-20. EPISODE: Da ghi nhan trajectory: increase timeout khong hieu qua; ClientSession + concurrency=20 giai quyet connection churn. EPISODE: Ten du an ca nhan cua toi la ORCHID-27. Toi thich Python va khong thich Java. Khi giai thich code, hay dung vi du ngan.`
 
 ### E07 - mixed
 
-``
+`<LONG_TERM> <USER_SUMMARY> Minh Nguyen's personal project is named ORCHID-27, for which Python is preferred. The company project BLUEBIRD-42 uses TypeScript with NestJS for its backend. Minh has an upcoming deadline for the benchmark report open loop LAB-REPORT-1600 by Friday at 4 PM. Minh is currently debugging async HTTP requests and has tried increasing the timeout to 60s without success, with the efficient approach being to reuse an aiohttp ClientSession and set concurrency to 20. The main issue was connection churn, related to the ASYNC-FIX-20 incident.  Minh Nguyen likes Python and dislikes Java. When explaining code, use short examples. When discussing async/await and coroutines vs. T`
 
 ### E11 - semantic
 
@@ -66,4 +66,4 @@
 
 ### E08 - long_term
 
-``
+`<USER_SUMMARY> Minh Nguyen's personal project is named ORCHID-27, for which Python is preferred. The company project BLUEBIRD-42 uses TypeScript with NestJS for its backend. Minh has an upcoming deadline for the benchmark report open loop LAB-REPORT-1600 by Friday at 4 PM. Minh is currently debugging async HTTP requests and has tried increasing the timeout to 60s without success, with the efficient approach being to reuse an aiohttp ClientSession and set concurrency to 20. The main issue was connection churn, related to the ASYNC-FIX-20 incident.  Minh Nguyen likes Python and dislikes Java. When explaining code, use short examples. When discussing async/await and coroutines vs. Tasks, explai`
